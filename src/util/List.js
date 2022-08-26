@@ -18,6 +18,7 @@ export class List {
     constructor(length){
         this.head = null;
         this.tail = null;
+        this.prevTail = null;
         this.length = length;
     }
 
@@ -25,9 +26,14 @@ export class List {
         if (!this.head || !this.tail){
             this.head = node;
             this.tail = node;
+            this.prevTail = node;
         }
-        this.tail.next = node;
-        this.tail = node; 
+        else{
+            this.tail.next = node;
+            this.prevTail = this.tail
+            this.tail = node; 
+        }
+
     }
 
     helper(node, newX, newY){
@@ -88,6 +94,30 @@ export class List {
         const nodeToAdd = new snakeNode(addX, addY);
         this.add(nodeToAdd);
     }
+
+    doesCollide(){
+        const [headX, headY] = [this.head.x, this.head.y];
+        let current = this.head.next;
+        while (current) {
+            if(headX === current.x && headY === current.y){
+                console.log("died");
+                return true;
+            }
+            current = current.next;
+        }
+        return false;
+    }
+
+    conflictwith(codrs){
+        let current = this.head;
+        while(current){
+            if(current.x === codrs.x && current.y === codrs.y)
+                return true;
+            current = current.next;
+        }
+        return false;
+    }
+
 
     printSnake(){
         let current = this.head;

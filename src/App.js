@@ -19,7 +19,7 @@ const createStartingSnake = () => {
   let node = new snakeNode(X, Y);
   snake.add(node)
 
-  for(let i =0; i< 6; i++){
+  for(let i =0; i< 15; i++){
     node = new snakeNode(--X, Y);
     snake.add(node);
   }
@@ -35,27 +35,68 @@ const putSnakeIntoGrid = (grid,snake) => {
   }
 }
 
+const putFoodIntoGrid = (grid, food) => {
+  grid[food.y][food.x] = 2
+}
+
+const createRandomCords = (length) => {
+  return {
+    x: Math.floor(Math.random() * length),
+    y: Math.floor(Math.random() * length)
+  }
+}
+
 function App() {
   const [snake, setSnake] = useState(() => createStartingSnake())
   const [direction, setDirection] = useState(() => Directions.RIGHT);
   const [grid, setGrid] = useState(createStartGrid(30))
-  const speed = 100;
-  const moveSnake = (dr) => {
-    snake.moveStep(dr)
-    setGrid((oldGrid) => {
-      let gr = createStartGrid(30);
-      putSnakeIntoGrid(gr, snake)
-      return gr
-    })
+  const [food, setFood] = useState({x: 20, y: 20});
+  const [eated, setEated] = useState(false);
+  const speed = 80;
+
+  const createFoodCords = (len) => {
+    let cords;
+    while(true) {
+      cords = createRandomCords(len);
+      if (!snake.conflictwith(cords))
+        return cords;
+    }
+  }
+
+  const moveSnake = (dr,inter) => {
+    if(!snake.doesCollide()){ 
+      const [nextX, nextY] = snake.caculateNextStep(snake.head, dr)
+      let foodCords = food;
+      // snake will eat
+      if (nextX === food.x && nextY === food.y){
+        snake.moveStepWithAdd(dr)
+        foodCords = createFoodCords(30)
+        setFood(foodCords);
+        setEated(true);
+      } else {
+        snake.moveStep(dr)
+      }
+      setGrid((oldGrid) => {
+        let gr = createStartGrid(30);
+        putSnakeIntoGrid(gr, snake)
+        putFoodIntoGrid(gr, foodCords)
+        return gr
+      })
+    } else{
+      clearInterval(inter)
+    }
   }
 
   const handleKeyPress = (e) => {
+    console.log(e.code)
     if(!e.repeat){
       switch (e.code){
+        case "ArrowUp": 
         case 'KeyW':
           if(direction !== Directions.UP && direction !== Directions.DOWN)  
             setDirection(Directions.UP);
           break;
+        case "ArrowRight":
         case 'KeyD':
 
           if(direction !== Directions.RIGHT && direction !== Directions.LEFT){
@@ -63,10 +104,12 @@ function App() {
           }  
             
           break;
+        case 'ArrowDown':
         case 'KeyS':
           if(direction !== Directions.UP && direction !== Directions.DOWN)  
             setDirection(Directions.DOWN); 
           break
+        case"ArrowLeft":
         case 'KeyA':
           if(direction !== Directions.RIGHT && direction !== Directions.LEFT)  
             setDirection(Directions.LEFT);
@@ -78,7 +121,6 @@ function App() {
   }
   // add event listener for keys
   useEffect(() => {
-    console.log(direction);
 
     document.addEventListener('keypress', handleKeyPress)
     return () => document.removeEventListener('keypress', handleKeyPress)
@@ -86,26 +128,18 @@ function App() {
 
   //  refresh every s seconds
   useEffect(() => {
-    let interval = setInterval(moveSnake, speed, direction)
+      if(eated){
+        setEated(false)
 
-    return () => clearInterval(interval) 
-  }, [direction])
+      } else {
+        moveSnake(direction);
+        let interval = setInterval(() => {
+          moveSnake(direction, interval)
+        }, speed)
+        return () => clearInterval(interval) 
+      }
 
-
-  // (for test only) move with move only
-  // useEffect(() => {
-  //   setSnake((oldSnake) => {
-  //     oldSnake.moveStep(direction)
-  //     return oldSnake
-  // })  }, [direction])
-  
-
-  // make snake changes
-  // useEffect(() => {
-
-  // }, [snake])
-
-  // snake.printSnake()
+  }, [direction, eated])
 
   return (
     <>
