@@ -1,6 +1,6 @@
 import './App.css';
 import Map from './Map'
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Directions, List, snakeNode } from './util/List';
 
 const createStartGrid = (length) => {
@@ -48,11 +48,13 @@ const createRandomCords = (length) => {
 
 function App() {
   const [snake, setSnake] = useState(() => createStartingSnake())
-  const [direction, setDirection] = useState(() => Directions.RIGHT);
+  const direction = useRef(Directions.RIGHT)
   const [grid, setGrid] = useState(createStartGrid(30))
   const [food, setFood] = useState({x: 20, y: 20});
   const [eated, setEated] = useState(false);
   const speed = 80;
+
+  const setDirection = (d) => direction.current = d
 
   const createFoodCords = (len) => {
     let cords;
@@ -93,25 +95,25 @@ function App() {
       switch (e.code){
         case "ArrowUp": 
         case 'KeyW':
-          if(direction !== Directions.UP && direction !== Directions.DOWN)  
+          if(direction.current !== Directions.UP && direction.current !== Directions.DOWN)  
             setDirection(Directions.UP);
           break;
         case "ArrowRight":
         case 'KeyD':
 
-          if(direction !== Directions.RIGHT && direction !== Directions.LEFT){
+          if(direction.current !== Directions.RIGHT && direction.current !== Directions.LEFT){
             setDirection(Directions.RIGHT);
           }  
             
           break;
         case 'ArrowDown':
         case 'KeyS':
-          if(direction !== Directions.UP && direction !== Directions.DOWN)  
+          if(direction.current !== Directions.UP && direction.current !== Directions.DOWN)  
             setDirection(Directions.DOWN); 
           break
         case"ArrowLeft":
         case 'KeyA':
-          if(direction !== Directions.RIGHT && direction !== Directions.LEFT)  
+          if(direction.current !== Directions.RIGHT && direction.current !== Directions.LEFT)  
             setDirection(Directions.LEFT);
           break;
         default:
@@ -124,7 +126,7 @@ function App() {
 
     document.addEventListener('keypress', handleKeyPress)
     return () => document.removeEventListener('keypress', handleKeyPress)
-  }, [direction])
+  }, [])
 
   //  refresh every s seconds
   useEffect(() => {
@@ -132,19 +134,19 @@ function App() {
         setEated(false)
 
       } else {
-        moveSnake(direction);
+        moveSnake(direction.current);
         let interval = setInterval(() => {
-          moveSnake(direction, interval)
+          moveSnake(direction.current, interval)
         }, speed)
         return () => clearInterval(interval) 
       }
 
-  }, [direction, eated])
+  }, [eated])
 
   return (
     <>
     <Map grid={grid} /> 
-    {direction}
+    
     </>
   );
 }
